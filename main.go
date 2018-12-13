@@ -30,7 +30,13 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		fmt.Printf("parse request error, request: %#v\n", request)
 	}
 	fmt.Printf("request update: %#v\n", update)
-	b.Send(update.Message.Chat, "小君君真好看！")
+	if update.Message.FromGroup() {
+		if update.Query != nil {
+			b.Send(update.Message.Chat, "小君君真好看！")
+		}
+	} else {
+		b.Send(update.Message.Chat, "小君君真好看！")
+	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
