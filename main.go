@@ -3,12 +3,38 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	tb "gopkg.in/tucnak/telebot.v2"
+	"encoding/json"
+	"fmt"
+	"os"
 )
 
+var TelegramToken = os.Getenv("telegram_token")
+
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+	fmt.Println("token:", TelegramToken)
+	b, err := tb.NewBot(tb.Settings{
+		Token: TelegramToken,
+	})
+	if err != nil {
+		fmt.Println("create bot error", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       "error",
+		}, fmt.Errorf("create bot error: %s\n", err)
+	}
+
+	update := tb.Update{}
+	if err := json.Unmarshal([]byte(request.Body), &update); err != nil {
+		fmt.Printf("parse request error, request: %#v\n", request)
+	}
+	fmt.Printf("request update: %#v\n", update)
+	b.Send(update.Message.Sender, "小君君真好看！")
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Body:       "Hello AWS Lambda and Netlify",
+		Body:       "ok",
 	}, nil
 }
 
