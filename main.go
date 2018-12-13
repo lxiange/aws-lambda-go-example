@@ -32,7 +32,8 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 	fmt.Printf("request update: %#v\n", update)
 	if update.Message.FromGroup() {
-		if len(update.Message.Entities) > 0 && strings.Contains(update.Message.Entities[0].User.Username, "LoveJean") {
+		if strings.Contains(update.Message.Text, "小君") {
+			fmt.Println("hit!!!!!!!!!")
 			b.Send(update.Message.Chat, "小君君真好看！")
 		}
 	} else {
