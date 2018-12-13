@@ -12,32 +12,40 @@ import (
 
 var TelegramToken = os.Getenv("telegram_token")
 
-func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+var bot, _ = tb.NewBot(tb.Settings{
+	Token: TelegramToken,
+})
 
-	fmt.Println("token:", TelegramToken)
-	b, err := tb.NewBot(tb.Settings{
-		Token: TelegramToken,
-	})
-	if err != nil {
-		fmt.Println("create bot error", err)
-		return events.APIGatewayProxyResponse{
-			StatusCode: 500,
-			Body:       "error",
-		}, fmt.Errorf("create bot error: %s\n", err)
-	}
+func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	update := tb.Update{}
 	if err := json.Unmarshal([]byte(request.Body), &update); err != nil {
 		fmt.Printf("parse request error, request: %#v\n", request)
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       "error",
+		}, fmt.Errorf("parse request error, request: %#v\n", request)
 	}
-	fmt.Printf("request update: %#v\n", update)
-	if update.Message.FromGroup() {
-		if strings.Contains(update.Message.Text, "小君") {
+
+	message := update.Message
+	if message == nil {
+		fmt.Println("Message is nil, skip")
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Body:       "ok",
+		}, nil
+	}
+
+	fmt.Printf("request message: %#v\n", message)
+
+	fmt.Println(message.Entities, len(message.Entities))
+	if message.FromGroup() {
+		if strings.Contains(message.Text, "小君") {
 			fmt.Println("hit!!!!!!!!!")
-			b.Send(update.Message.Chat, "小君君真好看！")
+			bot.Send(update.Message.Chat, "小君君真好看！")
 		}
 	} else {
-		b.Send(update.Message.Chat, "小君君真好看！")
+		bot.Send(update.Message.Chat, "小君君真好看！")
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -47,6 +55,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 }
 
 func main() {
+	fmt.Println("token:", TelegramToken)
 	// Make the handler available for Remote Procedure Call by AWS Lambda
 	lambda.Start(handler)
 }
